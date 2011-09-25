@@ -24,36 +24,39 @@ class YQL
 	/** @var string */
 	$defaultTablesDefinitionUrl = 'http://datatables.org/alltables.env'
     ;
-    
+
     private
 	$yqlUrl = 'http://query.yahooapis.com/v1/public/yql?q=',
 	$query,
 	$tablesDefinitionUrl
     ;
-    
+
     /**
-     * @param string $tablesDefinitionUrl Url of the tables definitions file 
-     */
+    * @param string $tablesDefinitionUrl Url of the tables definitions file 
+    */
     public function __construct($tablesDefinitionUrl = null) 
     {
-	if($tablesDefinitionUrl == null) $tablesDefinitionUrl = self::$defaultTablesDefinitionUrl;
+	if($tablesDefinitionUrl == null) 
+	{
+	    $tablesDefinitionUrl = self::$defaultTablesDefinitionUrl;
+	}
 	$this->tablesDefinitionUrl = $tablesDefinitionUrl;
     }
-    
+
     /**
-     * Gets the query to use
-     * @return string 
-     */
+    * Gets the query to use
+    * @return string 
+    */
     public function getQuery() 
     {
 	return $this->query;
     }
 
     /**
-     * Sets the query to use
-     * @param string $query
-     * @return YQL 
-     */
+    * Sets the query to use
+    * @param string $query
+    * @return YQL 
+    */
     public function setQuery($query) 
     {
 	$this->query = $query;
@@ -67,43 +70,50 @@ class YQL
 		."&format=json"
 		.'&env='
 		.urlencode($this->tablesDefinitionUrl);
-	    ;
+		;
     }
-    
+
     private function executeRequest($request)
     {
 	$session = curl_init($request);  
 	curl_setopt($session, CURLOPT_RETURNTRANSFER, true);      
 	return curl_exec($session);
     }
-    
+
     private function parseResponse($data)
     {
 	$jsonObj = json_decode($data);
 	if(isset($jsonObj->error))
+	{
 	    throw new Exception($jsonObj->error->description);
+	}
 	$response = new Response($data, $jsonObj->query->count, 
-		$jsonObj->query->created, $jsonObj->query->lang, $jsonObj->query->results);
+				    $jsonObj->query->created, $jsonObj->query->lang, 
+				    $jsonObj->query->results);
 	return $response;
     }
-    
+
     /**
-     * Executes the YQL query
-     * @param string $query
-     * @throws Exception
-     * @return Response 
-     */
+    * Executes the YQL query
+    * @param string $query
+    * @throws Exception
+    * @return Response 
+    */
     public function execute($query = null)
     {
 	if($query == null) 
+	{
 	    $query = $this->query;
+	}
 	if($query == null) 
+	{
 	    throw new Exception('No query set');
+	}
 	$request = $this->prepareRequest($query);
 	$response = $this->executeRequest($request);
 	return $this->parseResponse($response);
     }
-    
+
     public static function query($query)
     {
 	$yql = new static();
